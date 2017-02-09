@@ -13,6 +13,9 @@ sudo apt-get install -y \
     python3-virtualenv
 ```
 
+## Download the source
+> https://github.com/urosjarc/freelancer/releases/tag/1.0.0.RC
+
 ## Start with development
 ```shell
 make init
