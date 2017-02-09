@@ -14,8 +14,6 @@ class Component(object):
 
 	def __eq__(self, component):
 		return self.ref == component.ref and self.value == component.value
-	def __ne__(self, component):
-		return not(self.__eq__(component))
 
 	def __str__(self):
 		return 'ref({}), value({})'.format( self.ref, self.value )
@@ -34,9 +32,6 @@ class Node(object):
 
 	def __eq__(self, node):
 		return self.ref == node.ref and self.pin == node.pin
-
-	def __ne__(self, node):
-		return not(self.__eq__(node))
 
 	def __str__(self):
 		return 'ref({}), pin({})'.format( self.ref, self.pin )
@@ -67,9 +62,6 @@ class Net(object):
 			return True
 		else:
 			return False
-
-	def __ne__(self, node):
-		return not (self.__eq__(node))
 
 	def __str__(self):
 		return 'ref({}), name({})'.format( self.code, self.name )
@@ -107,20 +99,44 @@ class Project(object):
 			self.nets.append(net)
 
 	def diffReport(self, project):
-		Project._diff('componenst', self.components, project.components)
-		Project._diff('nets', self.nets, project.nets)
+		_, missingComps, overflownComps = Project.diff(self.components, project.components)
+		matchedNets, missingNets, overflownNets = Project.diff(self.nets, project.nets)
+
+		Project.reportDiff('\nComponents', missingComps, overflownComps, emptyReport=False)
+		Project.reportDiff('\nNets', missingNets, overflownNets, emptyReport=False)
+
+		for (selfNet, projNets) in matchedNets:
+			_, missingNodes, overflownNodes = Project.diff(selfNet.nodes, projNets.nodes)
+			Project.reportDiff('\nNet nodes {}'.format(selfNet), missingNodes, overflownNodes, emptyReport=False)
 
 	@staticmethod
-	def _diff(name, firstList, secondList):
+	def reportDiff(title, missing, overflown, emptyReport=True):
+		if emptyReport or len(missing) + len(overflown) > 0:
+			print('{} missing: {}, overflown: {}'.format(title, len(missing), len(overflown)))
+
+		if missing != []:
+			for comp in missing:
+				print(' --- {}'.format(comp))
+
+		if overflown != []:
+			for comp in overflown:
+				print(' +++ {}'.format(comp))
+
+	@staticmethod
+	def diff(firstList, secondList):
+		# Returned object
+		matchedPairsList = []
+
 		# Check missing components
 		missingList = []
-		matchedComp = []
+		matchedList= []
 		for selfComp in firstList:
 			missing = True
 			for comp in secondList:
 				if selfComp == comp:
 					missing = False
-					matchedComp.append(comp)
+					matchedList.append(comp)
+					matchedPairsList.append((selfComp, comp))
 					# Because unique comps is here break
 					break
 
@@ -131,21 +147,13 @@ class Project(object):
 		overflownList = []
 		for comp in secondList:
 			missing = True
-			for matchComp in matchedComp:
+			for matchComp in matchedList:
 				if matchComp == comp:
 					missing = False
 			if missing:
 				overflownList.append(comp)
 
-		if missingList != []:
-			print('\nMissing {}: {}'.format(name, len(missingList)))
-			for comp in missingList:
-				print(' - {}'.format(comp))
-
-		if overflownList != []:
-			print('\nOverflown {}: {}'.format(name, len(overflownList)))
-			for comp in overflownList:
-				print(' + {}'.format(comp))
+		return matchedPairsList, missingList, overflownList
 
 
 
