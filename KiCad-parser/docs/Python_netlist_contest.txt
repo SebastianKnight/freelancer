@@ -1,0 +1,79 @@
+
+Description of Netlist Format
+
+The organization of the elements in the attached netlist file is apparent upon inspection. Here are some key points:
+
+- The netlist file mostly consists of a list of components, followed by a list of nets.
+
+- Components are listed in the "components" section, which starts at line 2 in the attached file, and ends at line 1250.
+Each component is identified by the keyword "comp", followed by a unique "ref" field, and a non-unique "value" field.
+The order of the components is not significant. The order of components in the second input file will be different than
+the order of components in the first input file. The lists of components in the two input files are deemed to be equivalent
+if it can be shown that every component in input file 1 has an identical match in input file 2, and vice versa.
+(In other words, there is a 1:1 correspondence between the components in the two input files.)
+
+- Nets are listed in the "nets" section, which starts at line 1251 and ends at line 3851. Each net is identified by the
+keyword "net", followed by a unique "code", a unique "name", and a list of nodes. The order of the nets is not significant.
+The order of nets in the second input file will be different than the order of nets in the first input file. For a given net
+in the first input file, the matching net in the second input file will have the same list of nodes, but a different "code"
+and a different "name". Therefore, the script will need to determine whether two nets are the same by comparing only their
+lists of nodes, and ignoring their "code" and "name" fields.
+
+- Each net has a list of two or more nodes. Each node is identified by the keyword "node", followed by a "ref" field and
+a "pin" field. (The "ref" field refers to one of the components in the "components" list, though I don't think this fact
+is significant to this project.) The order of the nodes within a net is not significant. The order of the nodes in a given
+net in the first input file will likely be different than the order of the nodes in its matching net in the second input file.
+Two nodes are considered the same only if their "ref" fields are identical AND their "pin" fields are identical.
+
+- In a properly constructed netlist, each node appears only once in the file, in a single net. It is not necessary for the
+program to verify that the input files meet this criterion.  If you assume, however, that this is true for the input files,
+then this fact can be used to match nets in file 1 with nets in file 2. For example, if a net in file 1 contains the node
+(node (ref U21) (pin 2)) then you can find its matching net in file 2 by simply finding the net that contains the same node.
+Once you have found the matching net, then you can confirm the two nets are the same by matching each of their remaining
+contained nodes.
+
+- Note that for all values (ref, pin, and value), case is significant. "U2" is different than "u2".
+
+
+The Task
+
+1. Open and read the two input files.
+
+2. Parse each file into internal variables.
+
+3. For each file, report each component ref that is not unique (i.e. no two components in a given input file should have the same ref field).
+Example output message:
+"<filename> has more than one component with ref <ref>"
+
+4. For each file, report each component ref that has no match in the other file.
+Example output message:
+"Component <ref> in <filename1> has no match in <filename2>"
+
+5. Report each component that has a matching ref in the other file, but the value fields don't match.
+Example output message:
+"Component <ref> has value <value1> in <filename1>, but value <value2> in <filename2>"
+
+6. For each net in file 1, find its matching net in file 2, and confirm that the list of nodes agree between the two nets. Report inconsistencies. Various output messages might include:
+    Net <code> in <filename1> matches only 3 out of 4 nodes with net <code> in <filename2>:
+       Node <ref> pin <pin> in <filename1> does not appear in net <code> in <filename2>.
+    Unable to find matching net in <filename2> for net <code> in <filename1>.
+    
+    Other error messages are possible.
+
+    
+Why I Need This
+
+I created a schematic using a program called TinyCAD, with the intention of exporting its netlist (in Pads PCB format) to KiCad for PCB design. I'm experienced with TinyCAD, but new to KiCad. When I discovered that KiCad could not read the Pads PCB formatted netlist, I wrote a Python program (my first) to translate the netlist to the KiCad format. I then discovered that KiCad is unable to import ANY netlist without first assigning known PCB footprints to the components. This was the last straw for me, and I decided to hire someone to copy my schematic from TinyCAD to the KiCad schematic editor. With so many components, nets, and nodes, though, there are plenty of opportunities for that person to make errors. I decided that the best way to confirm that the new schematic was entered correctly was to have a script compare the original netlist translated from the TinyCAD format to the netlist generated by KiCad.
+
+So the output from this program will be used to advise the schematic-entry person exactly what mistakes need to be fixed. Once all mistakes are fixed, the two netlists should agree and I will have assurance that the job was done right.
+
+
+Suggested Approach
+
+I suggest you start by writing a script to create a second, equivalent netlist file that is derived from the first file I have provided. This would have the same data as the original file, except that the components, nets, and nodes would all be randomly re-ordered. Also, the "code" and "name" fields for each net would both be replaced with altogether different values that are unique.
+
+Then write a second script to compare my original file with the file your first script generated. This second script should be able to reuse significant portions of your code in the first script. It should accept the two input filenames on the command line. It should confirm that the two files are equivalent, or report discrepancies between the files to the standard output. 
+
+Then edit the second netlist file manually to introduce errors, for testing purposes. This would be used to confirm that your second script can find and report errors of each type. The errors would include missing components, extra components, two components having the same ref field, missing nets, extra nets, missing nodes, and extra nodes. Maybe you can imagine other problems that might arise from human error during the schematic entry process.
+
+
