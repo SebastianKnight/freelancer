@@ -13,7 +13,7 @@ install: clean ## install development libs
 	pip install -r requirements_dev.txt
 
 run: ## run test manualy
-	python kicad-diff ./test/resources/Netlist1.net
+	python kicad-diff ./test/resources/Netlist1.net ./test/resources/Netlist2.net
 
 #============================
 ### TESTING #################

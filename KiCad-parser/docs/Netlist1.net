@@ -1,5 +1,7 @@
 (export (version D)
   (components
+    (comp (ref "U2")
+      (value "96-TFBGA"))
     (comp (ref "U1")
       (value "package name for PCB layout"))
     (comp (ref "RP1")
@@ -3843,3 +3845,7 @@
       (node (ref R217) (pin 1))
       (node (ref U21) (pin 7))
       (node (ref R214) (pin 1)))
+    (net (code 497) (name "N000366")
+      (node (ref U23) (pin 3))
+      (node (ref R217) (pin 2))
+      (node (ref R228) (pin 1)))))
